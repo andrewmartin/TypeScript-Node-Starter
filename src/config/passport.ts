@@ -3,19 +3,18 @@ import passportLocal from 'passport-local';
 import passportFacebook from 'passport-facebook';
 import _ from 'lodash';
 
-// import { User, UserType } from '../models/User';
 import { User, UserDocument } from '../models/User';
 import { Request, Response, NextFunction } from 'express';
 
 const LocalStrategy = passportLocal.Strategy;
 const FacebookStrategy = passportFacebook.Strategy;
 
-passport.serializeUser<any, any>((user, done) => {
-  done(undefined, user.id);
+passport.serializeUser<UserDocument, string>((user, done) => {
+  done(null, user.id);
 });
 
 passport.deserializeUser((id, done) => {
-  User.findById(id, (err, user) => {
+  User.findById(id, function (err, user) {
     done(err, user);
   });
 });

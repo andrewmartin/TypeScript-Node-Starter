@@ -11,6 +11,9 @@ import passport from 'passport';
 import bluebird from 'bluebird';
 import { MONGODB_URI, SESSION_SECRET } from './util/secrets';
 
+import { ApolloServer } from 'apollo-server-express';
+import { loadFiles, mergeTypeDefs } from 'graphql-tools';
+
 const MongoStore = mongo(session);
 
 // Controllers (route handlers)
@@ -21,6 +24,7 @@ import * as contactController from './controllers/contact';
 
 // API keys and Passport configuration
 import * as passportConfig from './config/passport';
+import { resolvers } from './resolvers';
 
 // Create Express server
 const app = express();
@@ -91,6 +95,20 @@ app.use((req, res, next) => {
 app.use(
   express.static(path.join(__dirname, 'public'), { maxAge: 31557600000 })
 );
+
+let server;
+const schemaGlob = path.join(__dirname, '/../src/graphql') + '/**/*.graphql';
+loadFiles(schemaGlob)
+  .then((typeDefinitions) => {
+    const typeDefs = mergeTypeDefs(typeDefinitions);
+
+    server = new ApolloServer({ typeDefs, resolvers });
+    server.applyMiddleware({ app });
+  })
+  .catch((error) => {
+    console.error('[error] loadFiles: unable to build gql server');
+    console.error(error);
+  });
 
 /**
  * Primary app routes.
